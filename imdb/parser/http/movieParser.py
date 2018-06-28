@@ -1684,6 +1684,7 @@ class DOMHTMLFullCreditsParser(DOMParserBase):
     ]
 
     preprocessors = [
+        ('<td class="ellipsis">\n          </td>', '<td>...</td>'),
         (_reRolesMovie, _manageRoles)
     ]
 
