@@ -22,33 +22,19 @@ the results of a search for a given title.
 For example, when searching for the title "the passion", the parsed page
 would be:
 
-http://www.imdb.com/find?q=the+passion&tt=on&mx=20
+http://www.imdb.com/find?q=the+passion&s=tt
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from imdb.utils import analyze_title
 
-from .piculet import Path, Rule, Rules
+from .piculet import Path, Rule, Rules, reducers
 from .utils import DOMParserBase, analyze_imdbid
 
 
-def custom_analyze_title(title):
-    """Remove garbage notes after the (year), (year/imdbIndex) or (year) (TV)"""
-    # XXX: very crappy. :-(
-    nt = title.split(' aka ')[0]
-    if nt:
-        title = nt
-    if not title:
-        return {}
-    return analyze_title(title)
-
-
 class DOMHTMLSearchMovieParser(DOMParserBase):
-    """Parse the html page that the IMDb web server shows when the
-    "new search system" is used, for movies."""
-
-    _linkPrefix = '/title/tt'
+    """A parser for the title search page."""
 
     rules = [
         Rule(
@@ -58,7 +44,7 @@ class DOMHTMLSearchMovieParser(DOMParserBase):
                 rules=[
                     Rule(
                         key='link',
-                        extractor=Path('./a[1]/@href')
+                        extractor=Path('./a/@href', reduce=reducers.first)
                     ),
                     Rule(
                         key='info',
@@ -66,12 +52,12 @@ class DOMHTMLSearchMovieParser(DOMParserBase):
                     ),
                     Rule(
                         key='akas',
-                        extractor=Path('./i//text()')
+                        extractor=Path(foreach='./i', path='./text()')
                     )
                 ],
                 transform=lambda x: (
-                    analyze_imdbid(x.get('link') or ''),
-                    custom_analyze_title(x.get('info') or ''),
+                    analyze_imdbid(x.get('link')),
+                    analyze_title(x.get('info', '')),
                     x.get('akas')
                 )
             )
@@ -91,23 +77,15 @@ class DOMHTMLSearchMovieParser(DOMParserBase):
         if results is not None:
             data['data'][:] = data['data'][:results]
         # Horrible hack to support AKAs.
-        if data and data['data'] and len(data['data'][0]) == 3 and \
-                isinstance(data['data'][0], tuple):
             data['data'] = [x for x in data['data'] if x[0] and x[1]]
+        if data and data['data'] and len(data['data'][0]) == 3 and isinstance(data['data'][0], tuple):
             for idx, datum in enumerate(data['data']):
                 if not isinstance(datum, tuple):
                     continue
                 if not datum[0] and datum[1]:
                     continue
                 if datum[2] is not None:
-                    # akas = filter(None, datum[2].split('::'))
-                    if self._linkPrefix == '/title/tt':
-                        # XXX (HTU): couldn't find a result with multiple akas
-                        aka = datum[2]
-                        akas = [aka[1:-1]]      # remove the quotes
-                        # akas = [a.replace('" - ', '::').rstrip() for a in akas]
-                        # akas = [a.replace('aka "', '', 1).replace('aka  "',
-                        #         '', 1).lstrip() for a in akas]
+                    akas = [aka[1:-1] for aka in datum[2]]  # remove the quotes
                     datum[1]['akas'] = akas
                     data['data'][idx] = (datum[0], datum[1])
                 else:

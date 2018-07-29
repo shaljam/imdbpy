@@ -22,44 +22,43 @@ the results of a search for a given company.
 For example, when searching for the name "Columbia Pictures", the parsed page
 would be:
 
-http://www.imdb.com/find?s=co;mx=20;q=Columbia+Pictures
+http://www.imdb.com/find?q=Columbia+Pictures&s=co
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from imdb.utils import analyze_company_name
 
-from .piculet import Path, Rule, Rules
+from .piculet import Path, Rule, Rules, reducers
 from .searchMovieParser import DOMHTMLSearchMovieParser
 from .utils import analyze_imdbid
 
 
 class DOMHTMLSearchCompanyParser(DOMHTMLSearchMovieParser):
-    _linkPrefix = '/company/co'
+    """A parser for the company search page."""
 
     rules = [
         Rule(
             key='data',
             extractor=Rules(
-                foreach='//td[@class="result_text"]/a[starts-with(@href, "/company/co")]/..',
+                foreach='//td[@class="result_text"]',
                 rules=[
                     Rule(
                         key='link',
-                        extractor=Path('./a[1]/@href')
+                        extractor=Path('./a/@href', reduce=reducers.first)
                     ),
                     Rule(
                         key='name',
-                        extractor=Path('./a[1]/text()')
+                        extractor=Path('./a/text()')
                     ),
                     Rule(
                         key='notes',
-                        extractor=Path('./text()[1]')
+                        extractor=Path('./text()')
                     )
                 ],
                 transform=lambda x: (
                     analyze_imdbid(x.get('link')),
-                    analyze_company_name(x.get('name') + (x.get('notes') or ''),
-                                         stripNotes=True)
+                    analyze_company_name(x.get('name') + x.get('notes', ''), stripNotes=True)
                 )
             )
         )

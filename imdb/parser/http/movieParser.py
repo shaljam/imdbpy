@@ -1354,11 +1354,11 @@ class DOMHTMLReleaseinfoParser(DOMParserBase):
                 foreach='//table[@id="akas"]//tr',
                 rules=[
                     Rule(
-                        key='title',
+                        key='countries',
                         extractor=Path('./td[1]/text()')
                     ),
                     Rule(
-                        key='countries',
+                        key='title',
                         extractor=Path('./td[2]/text()')
                     )
                 ]
@@ -1388,9 +1388,12 @@ class DOMHTMLReleaseinfoParser(DOMParserBase):
             notes = i.get('notes')
             info = '%s::%s' % (country, date)
             if notes:
+                notes = notes.replace('\n', '')
+                i['notes'] = notes
                 info += notes
             rl.append(info)
         if releases:
+            data['raw release dates'] = data['release dates']
             del data['release dates']
         if rl:
             data['release dates'] = rl
@@ -1407,9 +1410,10 @@ class DOMHTMLReleaseinfoParser(DOMParserBase):
                 for country in countries:
                     nakas.append('%s::%s' % (title, country.strip()))
         if akas:
+            data['raw akas'] = data['akas']
             del data['akas']
         if nakas:
-            data['akas from release info'] = nakas
+            data['akas'] = data['akas from release info'] = nakas
         return data
 
 
@@ -2008,7 +2012,7 @@ class DOMHTMLSeasonEpisodesParser(DOMParserBase):
             key='_seasons',
             extractor=Path(
                 foreach='//select[@id="bySeason"]//option',
-                path='/@value'
+                path='./@value'
             )
         ),
         Rule(

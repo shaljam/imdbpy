@@ -22,58 +22,47 @@ the results of a search for a given person.
 For example, when searching for the name "Mel Gibson", the parsed page
 would be:
 
-http://www.imdb.com/find?q=Mel+Gibson&nm=on&mx=20
+http://www.imdb.com/find?q=Mel+Gibson&s=nm
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from imdb.utils import analyze_name
 
-from .piculet import Path, Rule, Rules
+from .piculet import Path, Rule, Rules,reducers
 from .searchMovieParser import DOMHTMLSearchMovieParser
 from .utils import analyze_imdbid
 
 
-def _cleanName(n):
-    """Clean the name in a title tag."""
-    if not n:
-        return ''
-    n = n.replace('Filmography by type for', '')    # FIXME: temporary.
-    return n
-
-
 class DOMHTMLSearchPersonParser(DOMHTMLSearchMovieParser):
-    """Parse the html page that the IMDb web server shows when the
-    "new search system" is used, for persons."""
-    _linkPrefix = '/name/nm'
+    """A parser for the name search page."""
 
     rules = [
         Rule(
             key='data',
             extractor=Rules(
-                foreach='//td[@class="result_text"]/a[starts-with(@href, "/name/nm")]/..',
+                foreach='//td[@class="result_text"]',
                 rules=[
                     Rule(
                         key='link',
-                        extractor=Path('./a[1]/@href')
+                        extractor=Path('./a/@href', reduce=reducers.first)
                     ),
                     Rule(
                         key='name',
-                        extractor=Path('./a[1]/text()')
+                        extractor=Path('./a/text()')
                     ),
                     Rule(
                         key='index',
-                        extractor=Path('./text()[1]')
+                        extractor=Path('./text()')
                     ),
                     Rule(
                         key='akas',
-                        extractor=Path('.//div[@class="_imdbpyAKA"]/text()')
+                        extractor=Path(foreach='./i', path='./text()')
                     )
                 ],
                 transform=lambda x: (
-                    analyze_imdbid(x.get('link') or ''),
-                    analyze_name((x.get('name') or '') + (x.get('index') or ''),
-                                 canonical=1), x.get('akas')
+                    analyze_imdbid(x.get('link')),
+                    analyze_name(x.get('name', '') + x.get('index', ''), canonical=1), x.get('akas')
                 )
             )
         )

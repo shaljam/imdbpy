@@ -32,7 +32,7 @@ from imdb.Movie import Movie
 from imdb.Person import Person
 from imdb.utils import _Container, flatten
 
-from .piculet import ElementTree, Rules, build_tree
+from .piculet import _USE_LXML, ElementTree, Rules, build_tree, html_to_xhtml
 from .piculet import xpath as piculet_xpath
 from .piculet import Rule, Path
 
@@ -411,7 +411,6 @@ class DOMParserBase(object):
             html_string = html_string.decode('utf-8')
         # Temporary fix: self.parse_dom must work even for empty strings.
         html_string = self.preprocess_string(html_string)
-        html_string = html_string.strip()
         if html_string:
             html_string = html_string.replace('&nbsp;', ' ')
             dom = self.get_dom(html_string)
@@ -442,6 +441,8 @@ class DOMParserBase(object):
     def get_dom(self, html_string):
         """Return a dom object, from the given string."""
         try:
+            if not _USE_LXML:
+                html_string = html_to_xhtml(html_string, omit_tags={"script"})
             dom = build_tree(html_string, force_html=True)
             if dom is None:
                 dom = build_tree('')

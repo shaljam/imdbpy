@@ -8,13 +8,19 @@ Changelog
   - #154: exclude docs and etc directories from packaging
   - introduce 'https' as an alias for 'http'
   - #151: the 'in' operator also considers key names
+  - #172: fix for ASCII keys in XML output
+  - #174: improve XML output
 
   [http]
 
-  - #155: ignore certificate to prevent validation errors
+  - #149: store person birth and death dates in ISO8601 format
+  - #166: fix birth and death dates without itemprop attributes
+  - #160: fix series seasons list
+  - #155 and #165: ignore certificate to prevent validation errors
   - #156: fix tech parser
   - #157: full-size headshot for persons
   - #161: fix string/unicode conversion in Python 2.7
+  - #173: raw akas and raw release dates fields
 
   [s3]
 

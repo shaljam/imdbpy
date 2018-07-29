@@ -156,7 +156,7 @@ def analyze_name(name, canonical=None):
     raise an IMDbParserError exception if the name is not valid.
     """
     original_n = name
-    name = name.strip()
+    name = name.split(' aka ')[0].strip()
     res = {}
     imdbIndex = ''
     opi = name.rfind('(')
@@ -315,7 +315,7 @@ def analyze_title(title, canonical=None, canonicalSeries=None, canonicalEpisode=
         canonicalSeries = canonicalEpisode = canonical
     original_t = title
     result = {}
-    title = title.strip()
+    title = title.split(' aka ')[0].strip()
     year = ''
     kind = ''
     imdbIndex = ''
@@ -985,6 +985,7 @@ TAGS_TO_MODIFY = {
     'movie.parents-guide': ('item', True),
     'movie.number-of-votes': ('item', True),
     'movie.soundtrack.item': ('item', True),
+    'movie.soundtrack.item.item': ('item', True),
     'movie.quotes': ('quote', False),
     'movie.quotes.quote': ('line', False),
     'movie.demographic': ('item', True),
@@ -1020,7 +1021,7 @@ def _tagAttr(key, fullpath):
         attrs['keytype'] = strType
         tagName = str(key)
     else:
-        tagName = str((key, 'ascii', 'ignore'))
+        tagName = key
     if isinstance(key, int):
         attrs['keytype'] = 'int'
     origTagName = tagName
@@ -1101,7 +1102,7 @@ def _seq2xml(seq, _l=None, withRefs=False, modFunct=None,
     else:
         if isinstance(seq, _Container):
             _l.extend(_tag4TON(seq))
-        else:
+        elif seq:
             # Text, ints, floats and the like.
             _l.append(_normalizeValue(seq, withRefs=withRefs,
                                       modFunct=modFunct,
