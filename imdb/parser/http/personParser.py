@@ -351,6 +351,13 @@ class DOMHTMLBioParser(DOMParserBase):
             )
         ),
         Rule(
+            key='mini bio',
+            extractor=Path(
+                '//a[@name="mini_bio"]/following::div[1]//p[1]//text()',
+                transform=transformers.strip
+            )
+        ),
+        Rule(
             key='mini biography',
             extractor=Rules(
                 foreach='//a[@name="mini_bio"]/following-sibling::'
